@@ -1,0 +1,25 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "headers": [
+    {
+      "comment": "Clips, posters, audio and the logo are content-addressed by name and only change when regenerated. A year-long immutable cache means a returning visitor re-downloads none of the 14 MB.",
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "comment": "The page and engine must NOT be cached hard — that is exactly what made local edits appear not to apply. must-revalidate lets the browser reuse them only after checking with the server.",
+      "source": "/(index.html)?",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/scrub-engine.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    }
+  ]
+}

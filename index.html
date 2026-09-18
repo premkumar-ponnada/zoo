@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>The Wildlife Zoo — step into the wild</title>
+  <meta name="description" content="Scroll to fly through a miniature wildlife sanctuary — from the gates to the whole valley, as one continuous journey." />
+
+  <link rel="icon" type="image/png" href="assets/logo/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <style>
+    /* No cream anywhere. --sw-bg cannot simply be deleted — the engine falls back to
+       its own #F5EDE0 — so it is overridden with a near-black. It is almost never seen
+       either way: .sw-scene__video is object-fit:cover, so the clip fills the viewport
+       and this only shows for the instant before the first frame paints, where dark
+       reads as a cinematic fade-up rather than a flash of colour. */
+    :root, .sw-root {
+      --sw-bg:        #14100B;
+      --sw-ink:       #3B2A17;
+      --sw-ink-soft:  #866C4B;
+      --sw-accent:    #C8762A;
+      --sw-font-display: 'Fraunces', Georgia, serif;
+      --sw-font-body:    'Inter', system-ui, -apple-system, sans-serif;
+    }
+    html, body { margin: 0; padding: 0; background: var(--sw-bg); }
+    body { font-family: var(--sw-font-body); }
+
+    /* Minimal chrome — the dioramas are the whole point. */
+    .sw-root .sw-nav {
+      background: color-mix(in srgb, #fff 42%, transparent);
+      border-color: color-mix(in srgb, var(--sw-ink) 12%, transparent);
+      backdrop-filter: blur(12px);
+    }
+    .sw-root .sw-nav__item {
+      color: color-mix(in srgb, var(--sw-ink) 76%, transparent);
+      text-decoration: none; letter-spacing: .02em; font-size: .78rem; font-weight: 400;
+    }
+    .sw-root .sw-nav__item:hover { color: var(--sw-ink); }
+    .sw-root .sw-brand__mark {
+      width: 44px; height: 38px;
+      background: url('assets/logo/logo.webp') center / contain no-repeat;
+      border-radius: 0; box-shadow: none;
+    }
+    /* Mark only — the logo already reads "ZOO", so the wordmark was saying it twice.
+       Clipped rather than display:none so the text still gives the brand link its
+       accessible name for screen readers. */
+    .sw-root .sw-brand__name {
+      position: absolute; width: 1px; height: 1px; overflow: hidden;
+      clip-path: inset(50%); white-space: nowrap;
+    }
+    .sw-root .sw-brand { gap: 0; }
+    @media (max-width: 860px) {
+      .sw-root .sw-brand__mark { width: 36px; height: 31px; }
+    }
+
+    .sw-root .sw-copy__title {
+      font-weight: 300; letter-spacing: .05em; line-height: 1.04;
+      font-size: clamp(2rem, 4.6vw, 3.6rem);
+      color: #FFF8EC;
+      text-shadow:
+        0 1px 1px  rgba(18, 11, 3, 0.80),
+        0 2px 5px  rgba(18, 11, 3, 0.62),
+        0 5px 16px rgba(18, 11, 3, 0.52),
+        0 10px 38px rgba(18, 11, 3, 0.42),
+        0 18px 70px rgba(18, 11, 3, 0.30);
+    }
+    .sw-root .sw-copy__body {
+      font-weight: 300; font-size: .98rem; line-height: 1.66; max-width: 30ch;
+      color: rgba(255, 248, 236, 0.95);
+      text-shadow:
+        0 1px 1px  rgba(18, 11, 3, 0.78),
+        0 2px 6px  rgba(18, 11, 3, 0.58),
+        0 6px 20px rgba(18, 11, 3, 0.44);
+    }
+    .sw-root .sw-copy__num {
+      letter-spacing: .22em; font-size: .66rem; opacity: .75;
+      color: rgba(255, 248, 236, 0.9);
+      text-shadow: 0 1px 1px rgba(18, 11, 3, 0.8), 0 2px 10px rgba(18, 11, 3, 0.6);
+    }
+    .sw-root .sw-hint {
+      color: rgba(255, 248, 236, 0.85); letter-spacing: .2em; font-size: .66rem;
+      text-shadow: 0 1px 1px rgba(18, 11, 3, 0.8), 0 2px 12px rgba(18, 11, 3, 0.6);
+    }
+    .sw-root .sw-route__label {
+      background: rgba(255, 253, 248, 0.86); color: var(--sw-ink);
+      border-color: color-mix(in srgb, var(--sw-ink) 12%, transparent);
+      font-weight: 400; letter-spacing: .05em; font-size: .7rem;
+    }
+    .sw-root .sw-btn { font-weight: 400; letter-spacing: .06em; font-size: .8rem; }
+
+    /* The engine tints these chips with --sw-bg, which is now near-black — that would
+       put mid-brown text on a dark pill over bright artwork. Matched to the nav so all
+       the floating chrome reads the same way. */
+    .sw-root .sw-snd,
+    .sw-root .sw-auto { color: color-mix(in srgb, var(--sw-ink) 70%, transparent); }
+    /* Only when standing alone — nested in the nav pill they inherit its surface. */
+    .sw-root .sw-controls:not(.sw-nav .sw-controls) .sw-snd,
+    .sw-root .sw-controls:not(.sw-nav .sw-controls) .sw-auto {
+      background: color-mix(in srgb, #fff 42%, transparent);
+      border-color: color-mix(in srgb, var(--sw-ink) 12%, transparent);
+    }
+    .sw-root .sw-nav .sw-snd.is-on,
+    .sw-root .sw-nav .sw-auto.is-on { color: #fff; }
+    .sw-root .sw-snd:hover,  .sw-root .sw-snd.is-on,
+    .sw-root .sw-auto:hover, .sw-root .sw-auto.is-on { color: var(--sw-ink); }
+
+
+    /* ---- Closing call to action ------------------------------------------
+       Sits high in the frame, where the final aerial shot is open sky, so it floats
+       over the reveal instead of covering the zoo. Hidden until the engine marks the
+       journey finished (.sw-end on the container), then fades and settles in.
+       z-index 60: above the copy layer (20) and route rail (40), below the SOUND/AUTO
+       controls (70). Demo placeholder — the href goes nowhere by design. */
+    .book-cta {
+      position: fixed; z-index: 60;
+      top: clamp(88px, 14vh, 150px); left: 50%;
+      transform: translate(-50%, -14px);
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 15px 32px; border-radius: 999px;
+      font-family: var(--sw-font-body); font-size: .78rem; letter-spacing: .14em;
+      text-transform: uppercase; text-decoration: none; white-space: nowrap;
+      color: #2A1C0E; background: transparent;
+      border: 1px solid rgba(42, 28, 14, 0.42);
+      backdrop-filter: blur(5px);
+      text-shadow: 0 1px 7px rgba(255, 252, 244, 0.7);
+      box-shadow: none;
+      opacity: 0; pointer-events: none; visibility: hidden;
+      transition: opacity .9s ease, transform .9s cubic-bezier(.22,.61,.36,1),
+                  visibility 0s linear .9s;
+    }
+    .sw-root.sw-end ~ .book-cta {
+      opacity: 1; visibility: visible; pointer-events: auto;
+      transform: translate(-50%, 0);
+      transition: opacity .9s ease, transform .9s cubic-bezier(.22,.61,.36,1),
+                  visibility 0s linear 0s;
+    }
+    .book-cta:hover {
+      border-color: rgba(42, 28, 14, 0.75);
+      background: rgba(255, 252, 244, 0.16);
+    }
+    .book-cta i {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: currentColor; opacity: .55; flex: 0 0 7px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .book-cta { transition: opacity .3s ease, visibility 0s linear .3s; transform: translate(-50%, 0); }
+      .sw-root.sw-end ~ .book-cta { transform: translate(-50%, 0); }
+    }
+    @media (max-width: 860px) {
+      .book-cta { top: calc(68px + env(safe-area-inset-top)); padding: 13px 24px; font-size: .7rem; }
+    }
+
+    /* ---- Interaction states ----------------------------------------------
+       Clicking was leaving the browser's default focus ring behind — a fuzzy blue-grey
+       halo that sits badly on this artwork. Suppressed for POINTER input only:
+       :focus-visible still fires for keyboard users, so tabbing keeps a clear ring.
+       Removing focus outright would make the page unusable without a mouse. */
+    .sw-root .sw-nav__item,
+    .sw-root .sw-btn,
+    .sw-root .sw-snd,
+    .sw-root .sw-auto,
+    .sw-root .sw-route__dot,
+    .sw-root .sw-brand,
+    .book-cta {
+      -webkit-tap-highlight-color: transparent;   /* no grey flash on touch */
+    }
+    .sw-root .sw-nav__item:focus:not(:focus-visible),
+    .sw-root .sw-btn:focus:not(:focus-visible),
+    .sw-root .sw-snd:focus:not(:focus-visible),
+    .sw-root .sw-auto:focus:not(:focus-visible),
+    .sw-root .sw-route__dot:focus:not(:focus-visible),
+    .sw-root .sw-brand:focus:not(:focus-visible),
+    .book-cta:focus:not(:focus-visible) { outline: none; }
+
+    .sw-root .sw-nav__item:focus-visible,
+    .sw-root .sw-btn:focus-visible,
+    .sw-root .sw-snd:focus-visible,
+    .sw-root .sw-auto:focus-visible,
+    .sw-root .sw-route__dot:focus-visible,
+    .sw-root .sw-brand:focus-visible,
+    .book-cta:focus-visible {
+      outline: 2px solid var(--sw-accent);
+      outline-offset: 3px;
+      border-radius: 999px;
+    }
+
+    /* A small press response, so a click still feels acknowledged now that the ring
+       is gone on pointer input. */
+    .sw-root .sw-nav__item:active,
+    .sw-root .sw-snd:active,
+    .sw-root .sw-auto:active,
+    .book-cta:active { transform: scale(0.97); }
+    .book-cta:active { transform: translate(-50%, 0) scale(0.97); }
+    .sw-root .sw-btn:active { transform: translateY(1px); }
+  </style>
+</head>
+<body>
+  <div id="top"></div>
+  <div id="world"></div>
+
+  <a class="book-cta" href="#" aria-label="Book tickets (demo placeholder)">
+    <i></i>Book Tickets
+  </a>
+
+  <script src="scrub-engine.js"></script>
+  <script>
+    // ---------------------------------------------------------------------------
+    // THE WILDLIFE ZOO — one continuous walk through six habitats.
+    //
+    // Architecture A (SKILL Step 4): each leg's FIRST frame is the previous leg's
+    // ACTUAL LAST frame, so the camera never resets and habitats arrive ahead of the
+    // visitor rather than each scene restarting. Four of the five seams are
+    // frame-identical (31–36 dB); the jungle→water seam is a crossfade because the
+    // provider's guardrail refused that frame as an input and it had to be reseeded
+    // from a fresh still.
+    //
+    // Assets: opening still from minimax image-01, legs from gemini omni-flash-i2v,
+    // both via Monid, 720p. Ambient beds are the clips' own generated audio, extracted
+    // and palindrome-looped — the video itself is muted, because scrubbed audio is
+    // unusable.
+    // ---------------------------------------------------------------------------
+    mountScrollWorld(document.getElementById('world'), {
+      brand: { name: 'THE WILDLIFE', href: '#top' },   // mark supplies "ZOO"
+      hint: 'SCROLL TO ENTER',
+      atmosphere: false,        // the dioramas carry the atmosphere themselves
+      crossfade: 0.06,          // frame-identical handoffs need only a whisper
+      fps: 24,                  // clips are 24fps; sets the seek threshold
+      audioVolume: 0.5,         // ambience sits under conscious attention
+      autoScrollSpeed: 0.17,    // viewport-heights/sec — ~69s for the full walk
+      endAt: 0.965,             // hold the Book Tickets CTA until the reveal lands
+      endDelay: 1000,           // ...and only after a second spent at the end
+      diveScroll: 1.5,
+
+      // Two destinations only. What's On and Tickets are gone — the first had no
+      // content behind it, and the second is now served by the Book Tickets button that
+      // appears at the end. The SOUND and AUTO controls sit alongside these in the bar.
+      navItems: [
+        { label: 'Animals',   to: 2 },          // The Watering Hole — the richest animal scene
+        { label: 'Map',       to: 5 },          // the whole-zoo reveal IS the map
+      ],
+
+      sections: [
+        { id: 'entrance', label: 'The Entrance',
+          still: 'assets/posters/01-entrance.webp', clip: 'assets/vid/01-entrance.mp4',
+          audio: 'assets/audio/01-entrance.mp3',
+          accent: '#C8762A', scroll: 2.0, linger: 0.30,
+          title: 'THE WILDLIFE ZOO',
+          body: 'Step into the wild.' },
+
+        { id: 'jungle', place: 'left-bottom', label: 'The Jungle',
+          still: 'assets/posters/02-jungle.webp', clip: 'assets/vid/02-jungle.mp4',
+          audio: 'assets/audio/02-jungle.mp3',
+          accent: '#5C9A3E', scroll: 1.8, linger: 0.35,
+          title: 'THE JUNGLE',
+          body: 'Something moves in the branches overhead. Look up as you pass.' },
+
+        { id: 'water', place: 'right-bottom', label: 'The Watering Hole',
+          still: 'assets/posters/03-water.webp', clip: 'assets/vid/03-water.mp4',
+          audio: 'assets/audio/03-water.mp3',
+          accent: '#3F9AA8', scroll: 1.9, linger: 0.40,
+          title: 'THE WATERING HOLE',
+          body: 'Elephants in the shallows, flamingos at the edge. The whole zoo comes here to drink.' },
+
+        { id: 'savanna', place: 'right', label: 'The Wild Plains',
+          still: 'assets/posters/04-savanna.webp', clip: 'assets/vid/04-savanna.mp4',
+          audio: 'assets/audio/04-savanna.mp3',
+          accent: '#D9A441', scroll: 1.8, linger: 0.35,
+          title: 'THE WILD PLAINS',
+          body: 'Giraffes browse the treetops, zebra drift across the grass. The sky goes on for miles.' },
+
+        { id: 'predators', place: 'left-bottom', label: 'Big Cat Ridge',
+          still: 'assets/posters/05-predators.webp', clip: 'assets/vid/05-predators.mp4',
+          audio: 'assets/audio/05-predators.mp3',
+          accent: '#C8762A', scroll: 1.9, linger: 0.45,
+          title: 'BIG CAT RIDGE',
+          body: 'Lions on the warm stone. A tiger somewhere in the bamboo. Watch quietly.' },
+
+        { id: 'aviary', place: 'left-bottom', label: 'The Whole Zoo',
+          still: 'assets/posters/06-aviary.webp', clip: 'assets/vid/06-aviary.mp4',
+          audio: 'assets/audio/06-aviary.mp3',
+          accent: '#4FA9B8', scroll: 2.3, linger: 0.50,
+          title: 'EXPLORE THE WILD',
+          body: 'Your journey starts here.',
+          cta: { buttons: [
+            { label: 'PLAN YOUR VISIT',   href: '#', primary: true },  // demo placeholder
+            { label: 'Zoo Map',           to: 4 },   // Big Cat Ridge — the last wide vantage
+            { label: 'Meet the Animals',  to: 2 },   // The Watering Hole, same as the nav
+          ] } },
+      ],
+
+      // Architecture A: each leg starts on the previous leg's actual last frame, so
+      // the legs ARE the journey and there is nothing to connect.
+      connectors: [],
+    });
+  </script>
+
+</body>
+</html>

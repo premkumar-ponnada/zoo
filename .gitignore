@@ -1,0 +1,36 @@
+# Generation scratch. The .py generators and prompts/ inside build/ ARE worth keeping
+# in the repo (they are how the assets were made), so build/ is not ignored wholesale —
+# only its heavy intermediates are.
+build/raw/
+build/gen/
+build/walk/
+build/frames/
+build/*.png
+build/*.webp
+build/*.jpg
+# Per-run API request/response records. They contain expired signed URLs and have no
+# value once the assets are downloaded.
+build/*_run.json
+build/req_*.json
+build/w_*.json
+build/t_min*.json
+build/bal.json
+
+# QA screenshots taken during development (root level only — assets/logo/favicon.png
+# must NOT be caught by this).
+/*.png
+
+# Playwright artefacts
+.playwright-mcp/
+
+# The logo master. Only assets/logo/logo.webp (13 KB) is referenced by the page.
+assets/logo/logo.jpg
+
+# The raw 54 MB screen recording. docs/demo.mp4 is the 5.4 MB copy that ships.
+assets/zoo.mp4
+
+# OS / editor noise
+Thumbs.db
+desktop.ini
+.DS_Store
+*.log
