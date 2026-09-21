@@ -1,0 +1,113 @@
+# Deploys the static site to Azure App Service using a publish profile.
+#
+# Auth: publish profile. There is deliberately NO azure/login step and NO
+# id-token: write — the profile carries its own deployment credentials, so the az CLI
+# is not authenticated in this workflow and any `az ...` step would fail.
+#
+# Prerequisites the developer must complete first — see DEPLOYMENT.md:
+#   - The App Service exists
+#   - Secret AZURE_WEBAPP_PUBLISH_PROFILE is set in the repository
+#   - A startup command is set BY HAND in the portal (publish-profile auth cannot
+#     set one), unless the app runs on the PHP or Windows stack
+name: Deploy to Azure App Service
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Two pushes must not deploy to the same app at once (CI-07).
+concurrency:
+  group: "deploy-app-service"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build deployment payload
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # No install, test or build step: this repo has no dependencies, no test suite
+      # and no build pipeline. It is hand-written HTML, one dependency-free JS file and
+      # media assets. The "build" is selecting which of those files belong in
+      # production — shipping the whole repo would send the Python generators in
+      # build/ and the 7 MB demo video in docs/ to a web server that will never use
+      # either.
+      - name: Assemble site payload
+        run: |
+          set -euo pipefail
+          mkdir -p site
+          cp index.html scrub-engine.js site/
+          cp -r assets site/
+          echo "Payload contents:"
+          find site -type f | sort
+          echo "Payload size: $(du -sh site | cut -f1)"
+
+      # Fail loudly here rather than deploying a page whose assets 404 in production.
+      - name: Verify every referenced asset is present
+        run: |
+          set -euo pipefail
+          missing=0
+          grep -oE "assets/[A-Za-z0-9/._-]+" site/index.html | sort -u | while read -r ref; do
+            if [ ! -f "site/$ref" ]; then
+              echo "MISSING: $ref"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then exit 1; fi
+          echo "All referenced assets present."
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: app-build
+          path: site
+          if-no-files-found: error
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Gates the job behind this GitHub Environment's reviewers and secrets.
+    environment:
+      name: "production"
+      url: "${{ steps.deploy.outputs.webapp-url }}"
+    permissions:
+      # No id-token: write — publish-profile auth requests no OIDC token, and granting
+      # an unused permission is needless privilege (SEC-03).
+      contents: read
+    steps:
+      # Deploy the artifact that was built — never rebuild here (CI-04).
+      - name: Download artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: app-build
+          path: ./app-build
+
+      # No azure/login step. The publish profile carries its own deployment
+      # credentials, so the az CLI is NOT authenticated in this job.
+      - name: Deploy to App Service
+        id: deploy
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: "scrool-world-app"
+          # Never inline the profile XML (SEC-02) — it is a credential.
+          publish-profile: "${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}"
+          package: ./app-build
+
+      # Without this the workflow reports green on a broken deploy.
+      - name: Verify deployment
+        run: |
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "https://scrool-world-app.azurewebsites.net/" || true)
+            if [ "$code" = "200" ]; then echo "Health check passed"; exit 0; fi
+            echo "Attempt $i: HTTP $code - retrying in 15s"; sleep 15
+          done
+          echo "Health check never returned 200"; exit 1
